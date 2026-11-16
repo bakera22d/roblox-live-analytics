@@ -31,14 +31,14 @@ GAMES_URL: Final = "https://games.roblox.com/v1/games"
 PLACE_TO_UNIVERSE_URL: Final = "https://apis.roblox.com/universes/v1/places/{place_id}/universe"
 GAME_PAGE_URL: Final = "https://www.roblox.com/games/{place_id}"
 
-REFRESH_SECONDS: Final = 30  # automatic refresh interval
-TIMER_TOLERANCE_SECONDS: Final = 5  # the 30 s timer may fire slightly early
-STATS_CACHE_SECONDS: Final = 10  # shortest gap between two real API calls
+REFRESH_SECONDS: Final = 10  # automatic refresh interval
+TIMER_TOLERANCE_SECONDS: Final = 2  # the refresh timer may fire slightly early
+STATS_CACHE_SECONDS: Final = 5  # shortest gap between two real API calls
 MAX_BACKOFF_SECONDS: Final = 300  # longest pause after repeated failures
-STALE_AFTER_SECONDS: Final = 90  # data older than this is flagged as stale
+STALE_AFTER_SECONDS: Final = 45  # data older than this is flagged as stale
 REQUEST_TIMEOUT: Final = (5, 10)  # (connect, read) seconds
 MAX_GAMES: Final = 20  # games monitored per session
-MAX_SNAPSHOTS: Final = 2880  # per game; about 24 hours at one per 30 s
+MAX_SNAPSHOTS: Final = 8640  # per game; about 24 hours at one per 10 s
 MAX_ROBLOX_ID: Final = 2**63 - 1
 
 SERIES_COLORS: Final = {"visits": "#3987e5", "playing": "#d95926"}
@@ -405,7 +405,7 @@ def fetch_games(universe_ids: tuple[int, ...]) -> FetchResult:
     """Fetch live stats for several games in one API call.
 
     Games Roblox does not return (private, deleted, under review or unknown IDs)
-    are simply absent from the result. The 10-second cache is shared by every
+    are simply absent from the result. The short cache is shared by every
     viewer of the app, which keeps the request rate low.
     """
     ids = ",".join(str(int(universe_id)) for universe_id in universe_ids)
@@ -1208,7 +1208,7 @@ def render_data_notes(*, expanded: bool = False) -> None:
 
 @st.fragment(run_every=REFRESH_SECONDS)
 def live_dashboard() -> None:
-    """The auto-refreshing part of the page. Reruns on its own every 30 seconds."""
+    """The auto-refreshing part of the page. Reruns on its own on a timer."""
     state = st.session_state
     manual = bool(state.pop("manual_refresh_requested", False))
     outcome = poll_games(manual=manual)
